@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
@@ -31,6 +31,22 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     redirect("/login");
   }
 
+  const headerList = await headers();
+  const pathname = headerList.get("x-pathname") || "";
+  const isBillingPage = pathname === "/dashboard/billing";
+
+  // Check subscription status
+  const isTrial = shop.subscriptionStatus === "TRIAL";
+  const isExpired = shop.subscriptionStatus === "EXPIRED";
+  const trialEnded = isTrial && new Date() > new Date(shop.trialEndsAt);
+  const subscriptionEnded = shop.subscriptionStatus === "ACTIVE" && shop.subscriptionEndsAt && new Date() > new Date(shop.subscriptionEndsAt);
+  
+  const isSubscriptionInvalid = isExpired || trialEnded || subscriptionEnded;
+
+  if (isSubscriptionInvalid && !isBillingPage) {
+    redirect("/dashboard/billing");
+  }
+
   const handleLogout = async () => {
     "use server";
     await logoutAction();
@@ -44,16 +60,25 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
       href: "/dashboard/queue",
       icon: <Users className="w-5 h-5" />,
       label: dict.dashboard.queueManager,
+      disabled: isSubscriptionInvalid,
     },
     {
       href: "/dashboard/analytics",
       icon: <BarChart3 className="w-5 h-5" />,
       label: dict.dashboard.analytics,
+      disabled: isSubscriptionInvalid,
     },
     {
       href: "/dashboard/settings",
       icon: <Settings className="w-5 h-5" />,
       label: dict.dashboard.settings,
+      disabled: isSubscriptionInvalid,
+    },
+    {
+      href: "/dashboard/billing",
+      icon: <Landmark className="w-5 h-5" />,
+      label: dict.billing.title,
+      disabled: false,
     },
   ];
 
@@ -89,22 +114,51 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
                 <User className="w-3 h-3 text-primary" />
                 {session.email}
               </span>
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {isSubscriptionInvalid ? (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                    {dict.billing.suspended}
+                  </span>
+                ) : isTrial ? (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                    {dict.billing.trialActive}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    {dict.billing.active}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Nav Links */}
         <nav className="p-4 flex flex-row md:flex-col gap-1.5 overflow-x-auto md:overflow-x-visible">
-          {navItems.map((item, i) => (
-            <Link
-              key={i}
-              href={item.href}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-muted-text hover:bg-card-bg hover:text-primary transition-all duration-200 whitespace-nowrap shrink-0 md:shrink-1"
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </Link>
-          ))}
+          {navItems.map((item, i) => {
+            const isActive = pathname === item.href;
+            const isDisabled = item.disabled;
+
+            return (
+              <Link
+                key={i}
+                href={isDisabled ? "/dashboard/billing" : item.href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap shrink-0 md:shrink-1 ${
+                  isActive
+                    ? "bg-primary text-white shadow-lg shadow-primary/20"
+                    : isDisabled
+                    ? "text-muted-text/30 hover:bg-rose-500/5 hover:text-rose-500/70 cursor-not-allowed"
+                    : "text-muted-text hover:bg-card-bg hover:text-primary"
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+                {isDisabled && (
+                  <span className="mr-auto text-[10px] font-black text-rose-500">🔒</span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Footer Actions */}

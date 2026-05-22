@@ -35,20 +35,23 @@ model User {
 }
 
 model Shop {
-  id             String   @id @default(uuid())
-  name           String
-  nameEn         String   // Name in English for bilingual support
-  slug           String   @unique
-  city           String
-  cityEn         String   // City in English for bilingual support
-  category       String
-  categoryEn     String   // Category in English for bilingual support
-  qrCode         String?  // SVG/Base64 generated QR code
-  avgServiceTime Int      @default(10) // In minutes
-  user           User?
-  queue          Queue?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                 String    @id @default(uuid())
+  name               String
+  nameEn             String    // Name in English for bilingual support
+  slug               String    @unique
+  city               String
+  cityEn             String    // City in English for bilingual support
+  category           String
+  categoryEn         String    // Category in English for bilingual support
+  qrCode             String?   // SVG/Base64 generated QR code
+  avgServiceTime     Int       @default(10) // In minutes
+  subscriptionStatus String    @default("TRIAL") // "TRIAL", "ACTIVE", "EXPIRED"
+  trialEndsAt        DateTime
+  subscriptionEndsAt DateTime?
+  user               User?
+  queue              Queue?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model Queue {

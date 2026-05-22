@@ -54,6 +54,9 @@ export async function registerAction(prevState: any, formData: FormData) {
 
     // Create User, Shop, Queue inside a single transaction
     const user = await db.$transaction(async (tx) => {
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 14); // 14 days trial
+
       const newShop = await tx.shop.create({
         data: {
           name: shopName,
@@ -65,6 +68,8 @@ export async function registerAction(prevState: any, formData: FormData) {
           categoryEn,
           qrCode: qrCodeSVG,
           avgServiceTime: 10,
+          trialEndsAt,
+          subscriptionStatus: "TRIAL",
         },
       });
 

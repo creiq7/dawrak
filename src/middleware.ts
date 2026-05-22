@@ -9,6 +9,10 @@ const SECRET = new TextEncoder().encode(
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Clone request headers and set pathname
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+
   // 1. Language management (dynamic language detection and set cookie if absent)
   let lang = request.cookies.get("lang")?.value;
   let hasSetLang = !!lang;
@@ -47,13 +51,17 @@ export async function middleware(request: NextRequest) {
   }
 
   // Set default language cookie if it was not present
+  const res = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
   if (!hasSetLang) {
-    const res = NextResponse.next();
     res.cookies.set("lang", lang, { path: "/", maxAge: 60 * 60 * 24 * 365 });
-    return res;
   }
 
-  return NextResponse.next();
+  return res;
 }
 
 export const config = {
