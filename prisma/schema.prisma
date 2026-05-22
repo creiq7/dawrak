@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  OWNER
+}
+
+enum TicketStatus {
+  WAITING
+  SERVING
+  DONE
+  SKIPPED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String   // Hashed Password
+  role      Role     @default(OWNER)
+  shopId    String?  @unique
+  shop      Shop?    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Shop {
+  id             String   @id @default(uuid())
+  name           String
+  nameEn         String   // Name in English for bilingual support
+  slug           String   @unique
+  city           String
+  cityEn         String   // City in English for bilingual support
+  category       String
+  categoryEn     String   // Category in English for bilingual support
+  qrCode         String?  // SVG/Base64 generated QR code
+  avgServiceTime Int      @default(10) // In minutes
+  user           User?
+  queue          Queue?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Queue {
+  id             String   @id @default(uuid())
+  shopId         String   @unique
+  shop           Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  currentNumber  Int      @default(0) // Currently called number
+  tickets        Ticket[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Ticket {
+  id           String       @id @default(uuid())
+  queueId      String
+  queue        Queue        @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  ticketNumber Int
+  status       TicketStatus @default(WAITING)
+  createdAt    DateTime     @default(now())
+  servedAt     DateTime?    // Time started serving
+  completedAt  DateTime?    // Time finished, skipped, or cancelled
+}
