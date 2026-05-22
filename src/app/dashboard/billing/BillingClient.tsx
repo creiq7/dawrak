@@ -45,8 +45,8 @@ export default function BillingClient({
   // Format WhatsApp message
   const handleWhatsAppActivation = () => {
     const planText = selectedPlan === "yearly" 
-      ? (isRtl ? "السنوي (399 ريال/سنة)" : "Annual (99 SAR/year)")
-      : (isRtl ? "الشهري (49 ريال/شهر)" : "Monthly (15 SAR/month)");
+      ? (isRtl ? "السنوي (399 ريال/سنة)" : "Annual (399 SAR/year)")
+      : (isRtl ? "الشهري (49 ريال/شهر)" : "Monthly (49 SAR/month)");
 
     const text = isRtl
       ? `السلام عليكم فريق دَوْرَك،\nأود تفعيل الاشتراك *${planText}* لحساب محلي.\n\nتفاصيل الحساب:\n• اسم المحل: ${displayName}\n• البريد الإلكتروني: ${sessionEmail}\n• رابط المحل الفريد: https://dawrak.com/queue/${shop.slug}\n\nلقد قمت بالتحويل البنكي، ومرفق أدناه إيصال التحويل لتفعيل الحساب.`
